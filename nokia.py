@@ -1,10 +1,8 @@
 import pygame
 import sys
-import pygame.mixer  # For audio
 
-# Initialize Pygame and mixer
+# Initialize Pygame
 pygame.init()
-pygame.mixer.init()
 
 # Set up display with wallpaper width and height
 width, height = 216, 480  # Adjusted screen dimensions
@@ -23,7 +21,7 @@ disconnect_button_img = pygame.image.load('data/disconnect_button.png')
 disconnect_button_img = pygame.transform.scale(disconnect_button_img, (40, 40))  # Resize disconnect button
 
 select_button_img = pygame.image.load('data/select_button.png')
-select_button_img = pygame.transform.scale(select_button_img, (40, 40))  # Resize select button
+select_button_img = pygame.transform.scale(select_button_img, (55, 55))  # Resize select button
 
 # Load images for number buttons (1-9, 0, *, #)
 button_images = {
@@ -45,19 +43,32 @@ button_images = {
 for key in button_images:
     button_images[key] = pygame.transform.scale(button_images[key], (40, 40))
 
+# Load dialpad sounds for each number (assuming these sound files are available in your data folder)
+dialpad_sounds = {
+    "1": pygame.mixer.Sound('audio/key/key_1.wav'),
+    "2": pygame.mixer.Sound('audio/key/key_2.wav'),
+    "3": pygame.mixer.Sound('audio/key/key_3.wav'),
+    "4": pygame.mixer.Sound('audio/key/key_4.wav'),
+    "5": pygame.mixer.Sound('audio/key/key_5.wav'),
+    "6": pygame.mixer.Sound('audio/key/key_6.wav'),
+    "7": pygame.mixer.Sound('audio/key/key_7.wav'),
+    "8": pygame.mixer.Sound('audio/key/key_8.wav'),
+    "9": pygame.mixer.Sound('audio/key/key_9.wav'),
+    "0": pygame.mixer.Sound('audio/key/key_0.wav'),
+    "*": pygame.mixer.Sound('audio/key/key_star.wav'),
+    "#": pygame.mixer.Sound('audio/key/key_hash.wav')
+}
+
 # Load the contacts image
 contacts_img = pygame.image.load('data/contacts.png')
-contacts_img = pygame.transform.scale(contacts_img, (70, 70))  # Resize the contacts image
-
-# Load sounds
-calling_sound = pygame.mixer.Sound('audio/ringing.mp3')
-ringtone_sound = pygame.mixer.Sound('audio/nokia_ringtone.mp3')
+contacts_img = pygame.transform.scale(contacts_img, (70, 70))  # Resize the contacts image to be slightly bigger
 
 # Define colors
 WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 BOTTOM_BACKGROUND = (50, 50, 50)  # Color for the bottom half background
+GLOW_COLOR = (255, 255, 0)  # Color for glowing effect (yellow)
 
 # Button class
 class Button:
@@ -66,6 +77,7 @@ class Button:
         self.text = text
         self.image = image
         self.font = pygame.font.Font(None, 24)  # Smaller font size to match smaller buttons
+        self.is_pressed = False  # State to track if the button is pressed
 
     def draw(self, surface):
         if self.image:
@@ -76,22 +88,26 @@ class Button:
             text_rect = text_surface.get_rect(center=self.rect.center)
             surface.blit(text_surface, text_rect)
 
+        # Add glowing effect if the button is pressed
+        if self.is_pressed:
+            pygame.draw.rect(surface, GLOW_COLOR, self.rect, 3)  # Draw a glowing border
+
     def is_clicked(self, pos):
         return self.rect.collidepoint(pos)
 
 # Resized buttons to fit smaller screen
 buttons = [
-    Button(20, 320, 40, 40, "1", button_images["1"]), Button(83, 320, 40, 40, "2", button_images["2"]), Button(146, 320, 40, 40, "3", button_images["3"]),
-    Button(20, 380, 40, 40, "4", button_images["4"]), Button(83, 380, 40, 40, "5", button_images["5"]), Button(146, 380, 40, 40, "6", button_images["6"]),
-    Button(20, 440, 40, 40, "7", button_images["7"]), Button(83, 440, 40, 40, "8", button_images["8"]), Button(146, 440, 40, 40, "9", button_images["9"]),
-    Button(20, 500, 40, 40, "*", button_images["*"]), Button(83, 500, 40, 40, "0", button_images["0"]), Button(146, 500, 40, 40, "#", button_images["#"]),
+    Button(25, 320, 40, 40, "1", button_images["1"]), Button(88, 320, 40, 40, "2", button_images["2"]), Button(151, 320, 40, 40, "3", button_images["3"]),
+    Button(25, 380, 40, 40, "4", button_images["4"]), Button(88, 380, 40, 40, "5", button_images["5"]), Button(151, 380, 40, 40, "6", button_images["6"]),
+    Button(25, 440, 40, 40, "7", button_images["7"]), Button(88, 440, 40, 40, "8", button_images["8"]), Button(151, 440, 40, 40, "9", button_images["9"]),
+    Button(25, 500, 40, 40, "*", button_images["*"]), Button(88, 500, 40, 40, "0", button_images["0"]), Button(151, 500, 40, 40, "#", button_images["#"]),
 ]
 
 # Middle buttons (call, disconnect, select)
 middle_buttons = {
-    "call": Button(146, 280, 40, 40, "call", call_button_img),
-    "disconnect": Button(20, 280, 40, 40, "disconnect", disconnect_button_img),
-    "select": Button(83, 280, 40, 40, "select", select_button_img)
+    "call": Button(151, 275, 40, 40, "call", call_button_img),
+    "disconnect": Button(25, 275, 40, 40, "disconnect", disconnect_button_img),
+    "select": Button(81, 257, 40, 40, "select", select_button_img)
 }
 
 # Placeholder for entered phone number
@@ -108,8 +124,8 @@ def draw_phone_number(surface, number):
 def draw_calling_message(surface):
     font = pygame.font.Font(None, 36)
     calling_text = font.render("Calling...", True, WHITE)
-    surface.blit(calling_text, (60, 180))  # Draw "Calling..." text on the screen
-    surface.blit(contacts_img, (60, 100))  # Draw contacts image above the "Calling..." text
+    screen.blit(calling_text, (60, 180))  # Draw "Calling..." text on the screen
+    screen.blit(contacts_img, (73, 110))  # Draw contacts image above the "Calling..." text
 
 # Main loop
 while True:
@@ -122,41 +138,36 @@ while True:
             for button in buttons:
                 if button.is_clicked(mouse_pos) and not calling:
                     entered_number += button.text
+                    dialpad_sounds[button.text].play()  # Play sound for the pressed button
+                    button.is_pressed = True  # Activate glow effect
             for button_key in middle_buttons:
                 if middle_buttons[button_key].is_clicked(mouse_pos):
                     if button_key == "call" and entered_number:
                         calling = True  # Set flag to true to show calling screen
-                        pygame.mixer.Sound.play(calling_sound)  # Play calling sound
                         entered_number = ''  # Clear the entered number
+                        pygame.mixer.Sound('audio/ringing.mp3').play()
                     elif button_key == "disconnect":
-                        calling = False  # End the call, clear the calling screen
+                        calling = False  # Reset the call state
                     elif button_key == "select":
-                        pygame.mixer.Sound.play(ringtone_sound)  # Play ringtone sound
+                        pygame.mixer.Sound('audio/nokia_ringtone.mp3').play()  # Play ringtone sound
+
+        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+            for button in buttons:
+                button.is_pressed = False  # Reset glow effect when mouse button is released
 
     # Fill the background with two halves
-    screen.fill(BLACK)  # Fill screen first
+    screen.blit(top_wallpaper, (0, 0))  # Wallpaper at the top
+    pygame.draw.rect(screen, BOTTOM_BACKGROUND, pygame.Rect(0, 261, width, height - 261))  # Bottom background
 
-    # Draw the top wallpaper (scaled)
-    screen.blit(top_wallpaper, (0, 0))  # Perfectly aligned at the top
-
-    # Draw the bottom background for button layout
-    pygame.draw.rect(screen, BOTTOM_BACKGROUND, (0, height // 2, width, height // 2))  # Bottom half background
-
-    # Draw middle buttons (call, disconnect, select) regardless of calling state
-    for button_key in middle_buttons:
-        middle_buttons[button_key].draw(screen)
-
-    # Draw number buttons regardless of calling state
+    # Draw the buttons and phone number
     for button in buttons:
+        button.draw(screen)
+    for button in middle_buttons.values():
         button.draw(screen)
 
     if calling:
-        # Show "Calling..." message and contacts image if call button is pressed
-        draw_calling_message(screen)
+        draw_calling_message(screen)  # Draw calling screen
+    else:
+        draw_phone_number(screen, entered_number)  # Draw the entered phone number
 
-    # Draw entered phone number
-    if not calling:
-        draw_phone_number(screen, entered_number)
-
-    # Update the display
-    pygame.display.flip()
+    pygame.display.update()
