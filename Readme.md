@@ -23,6 +23,11 @@ pip install pygame
 python main.py
 ```
 
+## Screenshots
+<img width="262" height="719" alt="image" src="https://github.com/user-attachments/assets/29076134-b8f1-415c-8f61-e5e8c366a5cb" />
+<img width="267" height="721" alt="image" src="https://github.com/user-attachments/assets/8b3e748f-d936-463b-a25c-981b109e33cd" />
+<img width="266" height="725" alt="image" src="https://github.com/user-attachments/assets/d78d3cc5-f48d-430b-934c-57fbfee9adf4" />
+
 ## Planned Future Additions
 1. Snake Game
 One of the most iconic features of Nokia phones was the Snake game. A future addition will include a fully functional Snake game accessible through the "Select" button. The game will feature:
